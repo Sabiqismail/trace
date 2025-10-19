@@ -1,10 +1,10 @@
-package com.example.trace.ui.traces
+package com.trace.journal.ui.traces
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.trace.data.Entry
-import com.example.trace.data.EntryRepository
+import com.trace.journal.data.Entry
+import com.trace.journal.data.EntryRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map

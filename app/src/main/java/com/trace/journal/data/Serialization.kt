@@ -1,4 +1,4 @@
-package com.example.trace.data
+package com.trace.journal.data
 
 import java.time.LocalDate
 import kotlinx.serialization.Serializable

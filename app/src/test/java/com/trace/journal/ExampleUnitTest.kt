@@ -1,4 +1,4 @@
-package com.example.trace
+package com.trace.journal
 
 import org.junit.Test
 

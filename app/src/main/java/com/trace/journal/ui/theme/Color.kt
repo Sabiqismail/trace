@@ -1,4 +1,4 @@
-package com.example.trace.ui.theme
+package com.trace.journal.ui.theme
 
 import androidx.compose.ui.graphics.Color
 

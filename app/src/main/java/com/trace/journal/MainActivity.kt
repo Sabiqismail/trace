@@ -1,4 +1,4 @@
-package com.example.trace
+package com.trace.journal
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -42,12 +42,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.example.trace.data.entryRepository
-import com.example.trace.ui.theme.TraceTheme
-import com.example.trace.ui.today.TodayScreen
-import com.example.trace.ui.today.TodayViewModel
-import com.example.trace.ui.traces.TracesScreen
-import com.example.trace.ui.traces.TracesViewModel
+import com.trace.journal.data.entryRepository
+import com.trace.journal.ui.theme.TraceTheme
+import com.trace.journal.ui.today.TodayScreen
+import com.trace.journal.ui.today.TodayViewModel
+import com.trace.journal.ui.traces.TracesScreen
+import com.trace.journal.ui.traces.TracesViewModel
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -201,14 +201,14 @@ class MainActivity : ComponentActivity() {
                                         notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                                     }
                                 }
-                                com.example.trace.notifications.ReminderScheduler.scheduleDaily(
+                                com.trace.journal.notifications.ReminderScheduler.scheduleDaily(
                                     this@MainActivity, 21, 0
                                 )
                                 reminderEnabled = true
                                 scope.launch { snackbarHostState.showSnackbar("Daily reminder set for 9:00 PM.") }
                             },
                             onDisable = {
-                                com.example.trace.notifications.ReminderScheduler.cancel(this@MainActivity)
+                                com.trace.journal.notifications.ReminderScheduler.cancel(this@MainActivity)
                                 reminderEnabled = false
                                 scope.launch { snackbarHostState.showSnackbar("Daily reminder turned off.") }
                             },

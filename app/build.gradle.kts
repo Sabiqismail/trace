@@ -6,11 +6,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.trace"
+    namespace = "com.trace.journal"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.trace"
+        applicationId = "com.trace.journal"
         minSdk = 24
         targetSdk = 34
         versionCode = 2

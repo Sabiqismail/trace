@@ -1,9 +1,9 @@
-package com.example.trace.ui.today
+package com.trace.journal.ui.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.example.trace.data.EntryRepository
+import com.trace.journal.data.EntryRepository
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay

@@ -1,4 +1,4 @@
-package com.example.trace.ui.today
+package com.trace.journal.ui.today
 
 import java.time.LocalDate
 

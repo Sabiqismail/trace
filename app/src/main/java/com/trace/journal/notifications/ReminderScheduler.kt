@@ -1,4 +1,4 @@
-package com.example.trace.notifications
+package com.trace.journal.notifications
 
 import android.content.Context
 import androidx.work.*

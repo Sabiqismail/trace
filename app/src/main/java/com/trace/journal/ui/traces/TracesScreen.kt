@@ -1,4 +1,4 @@
-package com.example.trace.ui.traces
+package com.trace.journal.ui.traces
 
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -15,12 +15,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.example.trace.data.Entry
+import com.trace.journal.data.Entry
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.trace.ui.theme.TraceTheme
+import com.trace.journal.ui.theme.TraceTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)

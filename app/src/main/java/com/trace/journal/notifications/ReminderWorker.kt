@@ -1,4 +1,4 @@
-package com.example.trace.notifications
+package com.trace.journal.notifications
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -8,7 +8,7 @@ import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.example.trace.R
+import com.trace.journal.R
 
 class ReminderWorker(
     appContext: Context,

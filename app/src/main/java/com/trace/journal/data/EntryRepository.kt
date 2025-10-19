@@ -1,4 +1,4 @@
-package com.example.trace.data
+package com.trace.journal.data
 
 import android.content.Context
 import androidx.datastore.core.DataStore

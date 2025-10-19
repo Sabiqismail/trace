@@ -1,4 +1,4 @@
-package com.example.trace.ui.theme
+package com.trace.journal.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
