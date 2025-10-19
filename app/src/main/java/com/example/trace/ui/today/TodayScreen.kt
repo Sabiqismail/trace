@@ -40,31 +40,46 @@ fun TodayScreen(
     onSave: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    // Seed state from initialText, but we’ll react if real data arrives later.
     var hadExistingToday by rememberSaveable { mutableStateOf(initialText.isNotBlank()) }
-    var text by rememberSaveable { mutableStateOf("") }
-    var isEditing by rememberSaveable { mutableStateOf(!hadExistingToday) }
+    var text by rememberSaveable { mutableStateOf(if (initialText.isNotBlank()) initialText else "") }
+    var isEditing by rememberSaveable { mutableStateOf(initialText.isBlank()) }
 
     val focusManager = LocalFocusManager.current
     val focusRequester = remember { FocusRequester() }
     val haptics = LocalHapticFeedback.current
 
+    // If ViewModel emits "" first then the real text later:
+    // - If user hasn't started typing (text is blank) and we’re in edit mode, switch to VIEW mode.
+    // - If already in VIEW, keep the display fresh with the latest saved text.
     LaunchedEffect(initialText) {
         val exists = initialText.isNotBlank()
-        hadExistingToday = exists
-        if (!isEditing) {
-            text = initialText
-        } else if (text.isBlank() && exists) {
-            text = initialText
-        } else if (!exists && text.isBlank()) {
-            text = ""
+        when {
+            exists && isEditing && text.isBlank() -> {
+                // First real load; user hasn’t typed — go to VIEW
+                hadExistingToday = true
+                isEditing = false
+                text = initialText
+            }
+            exists && !isEditing -> {
+                // Already in VIEW — refresh visible text if it changed
+                hadExistingToday = true
+                text = initialText
+            }
+            !exists -> {
+                // No saved entry; default to EDIT if we’re not already
+                hadExistingToday = false
+                if (!isEditing) isEditing = true
+                if (text.isBlank()) text = ""
+            }
         }
     }
 
-    // --- Animated bits (shorter lives) ---
+    // --- Post-save animations (short + gentle) ---
     var showTraceLine by remember { mutableStateOf(false) }
     LaunchedEffect(showTraceLine) {
         if (showTraceLine) {
-            delay(850) // shorter than before
+            delay(850)
             showTraceLine = false
         }
     }
@@ -72,7 +87,7 @@ fun TodayScreen(
     var showSavedMessage by remember { mutableStateOf(false) }
     LaunchedEffect(showSavedMessage) {
         if (showSavedMessage) {
-            delay(900) // shorter confirmation
+            delay(900)
             showSavedMessage = false
         }
     }
@@ -96,7 +111,7 @@ fun TodayScreen(
         )
 
         if (!isEditing && hadExistingToday) {
-            // ---- VIEW MODE ----
+            // ---- VIEW MODE (entry already saved for today) ----
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -107,14 +122,13 @@ fun TodayScreen(
                     .padding(4.dp)
             ) {
                 Text(
-                    text = if (initialText.isNotBlank()) initialText else text,
+                    text = text,
                     style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 24.sp),
                     color = MaterialTheme.colorScheme.onBackground,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 8.dp)
                 )
-                // Calm static underline for the saved entry
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -167,7 +181,7 @@ fun TodayScreen(
                             onSave(trimmed)
                             focusManager.clearFocus()
                             hadExistingToday = true
-                            isEditing = false
+                            isEditing = false       // return to VIEW after save/update
                         }
                     },
                     enabled = text.isNotBlank(),
@@ -178,16 +192,15 @@ fun TodayScreen(
             }
         }
 
-        // --- Extra space before the animated confirmation area ---
+        // Space before confirmation visuals
         Spacer(Modifier.height(24.dp))
 
-        // Animated "trace" line: centered, with edge→center fade
+        // Centered, edge→center fading "trace" line
         AnimatedVisibility(
             visible = showTraceLine,
             enter = fadeIn(tween(280)),
             exit = fadeOut(tween(520))
         ) {
-            // Narrower line to feel intentional (instead of full width)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -201,9 +214,9 @@ fun TodayScreen(
                         .background(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
-                                    Color(0x00CBA77C), // transparent copper (left)
-                                    Color(0xFFCBA77C), // peak copper (center)
-                                    Color(0x00CBA77C)  // transparent copper (right)
+                                    Color(0x00CBA77C),
+                                    Color(0xFFCBA77C),
+                                    Color(0x00CBA77C)
                                 )
                             ),
                             shape = RoundedCornerShape(1.dp)
@@ -212,7 +225,7 @@ fun TodayScreen(
             }
         }
 
-        // Confirmation text with a little more breathing room
+        // Shorter confirmation message
         AnimatedVisibility(
             visible = showSavedMessage,
             enter = fadeIn(tween(220)),
@@ -225,7 +238,7 @@ fun TodayScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 18.dp) // extra space vs before
+                    .padding(top = 18.dp)
             )
         }
 
