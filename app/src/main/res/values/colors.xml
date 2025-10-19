@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <!-- Brand palette -->
+    <color name="trace_linen">#F8F5F2</color>
+    <color name="trace_charcoal">#3D3C3A</color>
+    <color name="trace_copper">#CBA77C</color>
+    !-- Other colors -->
     <color name="purple_200">#FFBB86FC</color>
     <color name="purple_500">#FF6200EE</color>
     <color name="purple_700">#FF3700B3</color>

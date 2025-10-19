@@ -19,6 +19,10 @@ class EntryRepository(
     private val KEY_JSON = stringPreferencesKey("entries_json")
     private val listSerializer = ListSerializer(EntryDTO.serializer())
 
+    // Observe a single date's entry (null if none)
+    fun observeFor(date: java.time.LocalDate): kotlinx.coroutines.flow.Flow<Entry?> =
+        observeAll().map { list -> list.firstOrNull { it.date == date } }
+
     // Observe all entries (newest first)
     fun observeAll(): Flow<List<Entry>> =
         store.data.map { prefs ->
@@ -28,6 +32,17 @@ class EntryRepository(
         }.map { list ->
             list.sortedByDescending { it.date }
         }
+    suspend fun consecutiveDaysUpTo(date: java.time.LocalDate): Int {
+        // Read once and turn dates into a fast lookup set
+        val dates: Set<java.time.LocalDate> = readOnce().map { it.date }.toSet()
+        var count = 0
+        var d = date
+        while (dates.contains(d)) {
+            count += 1
+            d = d.minusDays(1)
+        }
+        return count
+    }
 
     // Internal: read current list once
     private suspend fun readOnce(): MutableList<Entry> =

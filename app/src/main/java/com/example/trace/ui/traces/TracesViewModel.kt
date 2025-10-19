@@ -7,28 +7,38 @@ import com.example.trace.data.Entry
 import com.example.trace.data.EntryRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import java.time.LocalDate
 
-class TracesViewModel(
-    repo: EntryRepository
-) : ViewModel() {
+class TracesViewModel(private val repo: EntryRepository) : ViewModel() {
 
-    // Stream of all entries, newest first
     val entries: StateFlow<List<Entry>> =
         repo.observeAll()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = emptyList()
-            )
+            .map { it } // Already sorted in the repository
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    // --- highlight toggle
+    fun toggleHighlight(date: LocalDate, highlight: Boolean) {
+        viewModelScope.launch {
+            repo.toggleHighlight(date, highlight)
+        }
+    }
+
+    // --- delete entry
+    fun delete(date: LocalDate) {
+        viewModelScope.launch {
+            repo.delete(date)
+        }
+    }
 
     companion object {
-        fun factory(repo: EntryRepository): ViewModelProvider.Factory =
-            object : ViewModelProvider.Factory {
-                @Suppress("UNCHECKED_CAST")
-                override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                    return TracesViewModel(repo) as T
-                }
+        fun factory(repo: EntryRepository) = object : ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return TracesViewModel(repo) as T
             }
+        }
     }
 }
