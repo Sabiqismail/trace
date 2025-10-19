@@ -4,42 +4,77 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.trace.data.EntryRepository
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class TodayViewModel(
     private val repo: EntryRepository
 ) : ViewModel() {
 
-    private val today: LocalDate = LocalDate.now()
+    private val _todayText = MutableStateFlow("")
+    val todayText: StateFlow<String> = _todayText.asStateFlow()
 
-    // Stream of today's text ("" if none) — used to prefill the input
-    val todayText: StateFlow<String> =
-        repo.observeFor(today)
-            .map { it?.text ?: "" }
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5_000),
-                initialValue = ""
-            )
+    init {
+        // Initial load + start midnight ticker
+        refreshToday()
+        startMidnightRefresh()
+    }
 
-    // Save/replace ONLY today's entry
-    fun saveForToday(text: String) {
+    /** Public: recompute today's text from repository */
+    fun refreshToday() {
         viewModelScope.launch {
-            repo.saveFor(today, text)
+            _todayText.value = loadTodayOnce()
         }
     }
 
-    companion object {
-        fun factory(repo: EntryRepository) = object : ViewModelProvider.Factory {
-            @Suppress("UNCHECKED_CAST")
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return TodayViewModel(repo) as T
+    /** Public: save/replace today's entry, then refresh */
+    fun saveForToday(text: String) {
+        viewModelScope.launch {
+            repo.saveFor(LocalDate.now(), text)
+            _todayText.value = text // optimistic update
+        }
+    }
+
+    // ---- Internals ----
+
+    private suspend fun loadTodayOnce(): String {
+        val today = LocalDate.now()
+        val entries = repo.observeAll().first() // read current snapshot once
+        return entries.firstOrNull { it.date == today }?.text.orEmpty()
+    }
+
+    private fun startMidnightRefresh() {
+        viewModelScope.launch {
+            while (true) {
+                delay(millisUntilNextMidnight())
+                // Day flipped: load today's (now new) entry/text
+                _todayText.value = loadTodayOnce()
             }
         }
+    }
+
+    private fun millisUntilNextMidnight(): Long {
+        val zone = ZoneId.systemDefault()
+        val now = ZonedDateTime.now(zone)
+        val nextMidnight = now.toLocalDate().plusDays(1).atStartOfDay(zone)
+        return ChronoUnit.MILLIS.between(now, nextMidnight).coerceAtLeast(1000L)
+    }
+
+    companion object {
+        fun factory(repo: EntryRepository): ViewModelProvider.Factory =
+            object : ViewModelProvider.Factory {
+                @Suppress("UNCHECKED_CAST")
+                override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                    return TodayViewModel(repo) as T
+                }
+            }
     }
 }

@@ -22,7 +22,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.Divider
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -40,6 +40,8 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.example.trace.data.entryRepository
 import com.example.trace.ui.theme.TraceTheme
 import com.example.trace.ui.today.TodayScreen
@@ -47,7 +49,6 @@ import com.example.trace.ui.today.TodayViewModel
 import com.example.trace.ui.traces.TracesScreen
 import com.example.trace.ui.traces.TracesViewModel
 import kotlinx.coroutines.launch
-import androidx.compose.material3.HorizontalDivider
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 class MainActivity : ComponentActivity() {
@@ -65,6 +66,11 @@ class MainActivity : ComponentActivity() {
             TraceTheme {
                 val snackbarHostState = remember { SnackbarHostState() }
                 val scope = rememberCoroutineScope()
+
+                // Refresh "today" when app returns to foreground (e.g., after midnight)
+                LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                    todayVm.refreshToday()
+                }
 
                 // Pager: 0 = Today, 1 = Traces
                 val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
@@ -135,10 +141,9 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
 
                     // subtle hairline under the app bar
-                    // around line ~137
                     HorizontalDivider(
                         thickness = 0.5.dp,
-                        color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.10f)
+                        color = MaterialTheme.colorScheme.outline.copy(alpha = 0.10f)
                     )
 
                     HorizontalPager(
@@ -258,10 +263,9 @@ private fun SettingsSheet(
                 )
             }
 
-            // around line ~259 (inside SettingsSheet)
             HorizontalDivider(
                 thickness = 0.5.dp,
-                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.08f)
             )
 
             Text(

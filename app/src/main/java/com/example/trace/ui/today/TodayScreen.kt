@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -22,6 +24,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -40,7 +43,7 @@ fun TodayScreen(
     onSave: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    // Seed state from initialText, but we’ll react if real data arrives later.
+    // Seed state from initialText, but react if real data arrives later.
     var hadExistingToday by rememberSaveable { mutableStateOf(initialText.isNotBlank()) }
     var text by rememberSaveable { mutableStateOf(if (initialText.isNotBlank()) initialText else "") }
     var isEditing by rememberSaveable { mutableStateOf(initialText.isBlank()) }
@@ -49,9 +52,7 @@ fun TodayScreen(
     val focusRequester = remember { FocusRequester() }
     val haptics = LocalHapticFeedback.current
 
-    // If ViewModel emits "" first then the real text later:
-    // - If user hasn't started typing (text is blank) and we’re in edit mode, switch to VIEW mode.
-    // - If already in VIEW, keep the display fresh with the latest saved text.
+    // Handle flow that may emit "" first then a real value later
     LaunchedEffect(initialText) {
         val exists = initialText.isNotBlank()
         when {
@@ -67,7 +68,7 @@ fun TodayScreen(
                 text = initialText
             }
             !exists -> {
-                // No saved entry; default to EDIT if we’re not already
+                // No saved entry; default to EDIT if not already
                 hadExistingToday = false
                 if (!isEditing) isEditing = true
                 if (text.isBlank()) text = ""
@@ -75,7 +76,16 @@ fun TodayScreen(
         }
     }
 
-    // --- Post-save animations (short + gentle) ---
+    // Dark-aware copper + selection colors
+    val isDark = MaterialTheme.colorScheme.background.luminance() < 0.2f
+    val copper = if (isDark) MaterialTheme.colorScheme.primary.copy(alpha = 0.85f)
+    else MaterialTheme.colorScheme.primary
+    val selectionColors = TextSelectionColors(
+        handleColor = copper,
+        backgroundColor = copper.copy(alpha = if (isDark) 0.25f else 0.20f)
+    )
+
+    // Post-save animations (short + gentle)
     var showTraceLine by remember { mutableStateOf(false) }
     LaunchedEffect(showTraceLine) {
         if (showTraceLine) {
@@ -83,7 +93,6 @@ fun TodayScreen(
             showTraceLine = false
         }
     }
-
     var showSavedMessage by remember { mutableStateOf(false) }
     LaunchedEffect(showSavedMessage) {
         if (showSavedMessage) {
@@ -133,7 +142,7 @@ fun TodayScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(2.dp)
-                        .background(Color(0xFFCBA77C), RoundedCornerShape(1.dp))
+                        .background(copper, RoundedCornerShape(1.dp))
                 )
                 Spacer(Modifier.height(8.dp))
                 Text(
@@ -144,28 +153,35 @@ fun TodayScreen(
             }
         } else {
             // ---- EDIT MODE ----
-            OutlinedTextField(
-                value = text,
-                onValueChange = { text = it },
-                placeholder = {
-                    Text(
-                        Prompts.forDate(),
-                        style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 22.sp)
+            CompositionLocalProvider(LocalTextSelectionColors provides selectionColors) {
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    placeholder = {
+                        Text(
+                            Prompts.forDate(),
+                            color = MaterialTheme.colorScheme.onBackground.copy(
+                                alpha = if (isDark) 0.55f else 0.65f
+                            ),
+                            style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 22.sp)
+                        )
+                    },
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 24.sp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 180.dp)
+                        .focusRequester(focusRequester),
+                    singleLine = false,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = copper,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(
+                            alpha = if (isDark) 0.18f else 0.15f
+                        ),
+                        cursorColor = copper
                     )
-                },
-                textStyle = MaterialTheme.typography.bodyLarge.copy(lineHeight = 24.sp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 180.dp)
-                    .focusRequester(focusRequester),
-                singleLine = false,
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.55f),
-                    unfocusedBorderColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.15f),
-                    cursorColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.6f)
                 )
-            )
+            }
 
             Spacer(Modifier.height(20.dp))
 
@@ -195,7 +211,7 @@ fun TodayScreen(
         // Space before confirmation visuals
         Spacer(Modifier.height(24.dp))
 
-        // Centered, edge→center fading "trace" line
+        // Centered, edge→center fading "trace" line using outline + copper peak
         AnimatedVisibility(
             visible = showTraceLine,
             enter = fadeIn(tween(280)),
@@ -214,9 +230,9 @@ fun TodayScreen(
                         .background(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
-                                    Color(0x00CBA77C),
-                                    Color(0xFFCBA77C),
-                                    Color(0x00CBA77C)
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0f),
+                                    copper,
+                                    MaterialTheme.colorScheme.outline.copy(alpha = 0f)
                                 )
                             ),
                             shape = RoundedCornerShape(1.dp)
@@ -233,7 +249,7 @@ fun TodayScreen(
         ) {
             Text(
                 text = "Saved to your trace.",
-                color = Color(0xFFCBA77C),
+                color = copper,
                 style = MaterialTheme.typography.bodyLarge.copy(lineHeight = 22.sp),
                 textAlign = TextAlign.Center,
                 modifier = Modifier

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,9 +75,9 @@ fun TracesScreen(
                                     .fillMaxWidth()
                                     .padding(top = 8.dp, bottom = 2.dp)
                             )
-                            Divider(
+                            HorizontalDivider(
                                 thickness = 0.5.dp,
-                                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.08f)
+                                color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                             )
                             Spacer(Modifier.height(4.dp))
                         }
@@ -112,9 +113,9 @@ fun TracesScreen(
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
-                        Divider(
+                        HorizontalDivider(
                             thickness = 0.5.dp,
-                            color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.06f)
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                         )
                     }
                 }
